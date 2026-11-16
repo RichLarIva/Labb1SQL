@@ -145,8 +145,75 @@ Dessa frågor ska besvaras med ett längre svar, minst en halv A4-sida:
 1. En banköverföring avbryts efter att pengarna dragits från det första kontot.
    Vad kan konsekvensen bli, och hur kan en transaktion hjälpa?
 
+Om en banköverföring nu skulle avbrytas efter att pengarna har dragifts från det första kontot kan det då uppstå
+problem. Exempelvis kan pengarna försvinna från den som skickar pengar konto medan att den som tar emot får inga pengar.
+Detta kan leda till att saldot på båda kontonen blir felaktiga och att banken skulle då behöva undersöka vad som har
+hänt för att rätta till problemet.
+
+För att förhindra den här typen av problem använder man transaktioner i databaser. En transaktion innebär helt enkelt
+att flera operationer behandlas som en enda operation. Det innebär då att antingen genomförs alla operationer eller så
+avbryts hela transaktionen.
+
+I en banköverföring skulle detta exempelvis innebära att banken först drar pengar från sändarens konto och sedan lägger
+till samma summa på mottagarens konto. Om något går fel under denna process kommer ändringarna återställas.
+
+Några viktiga SQL-kommandon som används just för detta är ```COMMIT``` och ```ROLLBACK```. ```COMMIT``` används för att
+spara ändringarna när alla operationer har lyckats. ```ROLLBACK``` som namnet säger används då istället för att ångra
+ändringarna och gå tillbaka i fall något går fel.
+
+Ett exempel på hur en banköverföring kan se ut i SQL:
+
+```mysql
+START TRANSACTION;
+
+UPDATE accounts
+SET balance = balance - 500
+WHERE id = 1;
+
+UPDATE accounts
+SET balance = balance + 500
+WHERE id = 2;
+
+COMMIT;
+```
+
+Om något går fel innan transaktionen har genomförts kan man som sagt använda sig av ```ROLLBACK``` istället för
+```COMMIT``` I just denna kod exempel.
+
+Transaktioner är därför väldigt viktiga i system där information måste vara korrekt, exempelvis banker och
+betalningssystem. Utan de skulle det finnas ännu större risk att information blir felakigkt om något avbryts under
+processen.
+
 2. Välj ett enkelt system, antingen en webbutik eller en chatt.
    Resonera om när en relationsdatabas respektive en NoSQL-databas
    kan vara lämplig. Motivera med hur informationen ska lagras och användas.
 
+Mitt exmpel kommer just vara en webbutik. I en webbutik kommer man behöva lagra flera olika typer av information, som
+exempel kunder, produkter, beställningar och betalningar. Informationen behöver även kunna kopplas ihop så att man
+exemepelvis kan se vilka produkter en viss kund har köpt.
 
+En relationsdatabas, just detta exempel MySQL (Då vi använder det i just denna kurs), skulle passa bra för en webbutik
+eftersom informationen har tydliga relationer till varandra. Man kan ha flera seperate tabeller för kunder, produkter,
+och beställningar. Varje kund kan ha flera beställningar och varje beställning kan inneha flera produkter.
+
+Och genom att använda sig av primärnyckalr och främmande nycklar kan man då koppla ihop tabellerna. Det gör det enklare
+att hämta den nödvändiga informationen, exempelvis vilka beställningar som tillhör en viss kund. En annan fördel då med
+relationsdatabaser är att man kan använda sig som tidigare nämnt transaktioner för att säkerställa att informationen
+blir korrekt. Det är särskilt viktigt vid betalningar och beställningar eftersom man vill inte att informationen blir
+felaktigt.
+
+I en NoSQL-database, MongoDB som exempel (Once again är för det är det vi använder i denna kurs), skulle självklart
+också kunna användas i en webbutik. Då istället för traditonella tabeller kan man lagra informationen i dokument med ett
+JSON liknande format. Ett produktdokument skulle kunna då innehålla produktens namn, pris, beskrivning och olika
+egenskaper.
+
+Fördelen med NoSQL är då att infomrationenn kan vara mer flexibel och inte måste ha en viss struktur (Vilket är varför i
+en chatt applikation kan vara ganska bra, eftersom en chatt kan innehålla bilder med annat.) Olika produkter behöver
+exempelvis inte ha samma egenskaper. En dator kan ha information om CPU och RAM-minne, dock en tröja istället kan ha
+storlek och färg. Med MongoDB kan då dessa egenskaper lagras direkt i respektive produktdokument utan att man behöver ha
+samma kolumner för alla produkter.
+
+Själv så tycker jag en relationsdatabass passar bäst i själva grunden i en webbutik eftersom kunder, beställningar och
+betalningar har tydliga relationer till varandra och informationen behöver då vara korrekt. Däremot skulle NoSQL kunna
+vara bra alternativ för exempelvis en produktkatalog eller en stor webbutik som säljer massor av grejor där olika
+produkter kan ha väldigt olika egenskaper.
